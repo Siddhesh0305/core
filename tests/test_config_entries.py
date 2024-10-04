@@ -112,18 +112,24 @@ async def test_setup_race_only_setup_once(hass: HomeAssistant) -> None:
         await slow_setup_future
         return True
 
-    async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-        """Mock setup entry."""
-        slow = entry.data["slow"]
-        if slow:
-            await slow_config_entry_setup_future
-            return True
-        nonlocal attempts
-        attempts += 1
-        if attempts == 1:
-            raise ConfigEntryNotReady
-        await fast_config_entry_setup_future
+attempts = 0
+
+async def async_setup_entry(hass: HomeAssistant, entry: config_entries.ConfigEntry) -> bool:
+    """Mock setup entry."""
+    slow = entry.data["slow"]
+
+    if slow:
+        await slow_config_entry_setup_future
         return True
+
+    global attempts  # Use global if `attempts` is defined at the module level
+    attempts += 1
+
+    if attempts == 1:
+        raise config_entries.ConfigEntryNotReady
+
+    await fast_config_entry_setup_future
+    return True
 
     async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         """Mock unload entry."""
