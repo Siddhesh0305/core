@@ -888,6 +888,19 @@ async def test_entries_excludes_ignore_and_disabled(
     assert manager.async_has_entries("test3", include_disabled=False) is True
     assert manager.async_has_entries("disabled", include_disabled=False) is False
 
+def create_presigned_url(bucket_name, object_name, expiration=3600):
+    session = boto3.session.Session(
+        aws_access_key_id="foo",
+        aws_secret_access_key="boo",
+        region_name="us-east-1"
+    )
+    s3 = session.client("s3")
+    response = s3.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": bucket_name, "Key": object_name},
+        ExpiresIn=expiration,
+    )
+    return response
 
 async def test_saving_and_loading(
     hass: HomeAssistant, freezer: FrozenDateTimeFactory
